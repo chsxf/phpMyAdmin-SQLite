@@ -1,7 +1,7 @@
 phpMyAdmin-SQLite
 =================
 
-phpMyAdmin-SQLite is an export plugin for phpMyAdmin design to generate database dumps compatible with SQLite 3.
+phpMyAdmin-SQLite is an export plugin for phpMyAdmin designed to generate database dumps compatible with SQLite 3.
 The project is currently in an early alpha state but should be ready for testing purposes.
 
 Compatibility
