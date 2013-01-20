@@ -28,4 +28,4 @@ Supported values are **`structure`** for exporting structure only, **`data`** fo
 License
 -------
 
-phpMyAdmin-SQLite is released under the terms of the GNU General Public License v2 if not specified otherwise.
+phpMyAdmin-SQLite source code is released under the terms of the GNU General Public License v2 if not specified otherwise.
