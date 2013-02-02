@@ -226,10 +226,45 @@ if (isset($plugin_list)) {
     function PMA_SQLite_mapTypeFromSQL($type) {
         if (preg_match('/(tiny|small|medium|big)?int(eger)?(\(\d+\))?/i', $type, $regs))
             return strtoupper(sprintf("%sint%s", $regs[1], $regs[3]));
-        else if (preg_match("/(?:var)?char(?:\(\d+\))?/i", $type, $regs))
-            return strtoupper($regs[0]);
+        else if (preg_match("/(var)?(binary|char)(\(\d+\))?/i", $type, $regs))
+            return strtoupper("%sCHAR%s", $regs[1], $regs[3]);
         else if (in_array(strtolower($type), array('date', 'datetime', 'timestamp', 'time', 'year')))
             return strtoupper($type);
+        else if (preg_match('/bool(ean)?/i', $type))
+        	return 'BOOLEAN';
+        else if (preg_match('/bit\((\d+)\)/i', $type, $regs))
+        {
+        	if ($regs[1] <= 8)
+        		return 'TINYINT';
+        	else if ($regs[1] <= 16)
+        		return 'SMALLINT';
+        	else if ($regs[1] <= 24)
+        		return 'MEDIUMINT';
+        	else if ($regs[1] <= 32)
+        		return 'INT';
+        	else
+        		return 'BIGINT';
+        }
+        else if (preg_match('/decimal(\(\d+(,\d+)?\))?/i', $type, $regs))
+        	return strtoupper($regs[0]);
+        else if (preg_match('/float(\(\d+(,\d+)?\))?/i', $type, $regs))
+        	return strtoupper($regs[1]);
+        else if (preg_match('/(double( precision)?)(\(\d+,\d+\))?/i', $type, $regs))
+        	return strtoupper($regs[1]);
+        else if (preg_match('/date(time)?/i', $type, $regs))
+        	return strtoupper($regs[0]);
+        else if (preg_match('/timestamp/i', $type, $regs))
+        	return strtoupper($regs[0]);
+        else if (preg_match('/(time|year)/i', $type, $regs))
+        	return 'INT';
+        else if (preg_match('/(var)?(binary|char)(\(\d+\))?/i', $type, $regs))
+        	return strtoupper("%sCHAR%s", $regs[1], $regs[3]);
+        else if (preg_match('/(tiny|medium|long)?text/i', $type) || preg_match('/(enum|set)/i', $type))
+        	return 'TEXT';
+        else if (preg_match('/(tiny|medium|long)?blob/i', $type))
+        	return 'BLOB';
+        	
+        return '';
     }
 
     /**
