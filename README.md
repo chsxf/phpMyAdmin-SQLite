@@ -23,7 +23,7 @@ You should add to your phpMyAdmin config.inc.php the following line in order to 
 
 `$cfg['Export']['sqlite3_structure_or_data'] = 'structure_and_data';`
 
-Supported values are **`structure`** for exporting structure only, **`data`** for exporting data only and  **`structure_and_data`** for exporting both.
+Supported values are `structure` for exporting structure only, `data` for exporting data only and  `structure_and_data` for exporting both.
 
 License
 -------
