@@ -119,7 +119,7 @@ if (isset($plugin_list)) {
     }
     
     /**
-     * Outputs the content of a table in CSV format
+     * Outputs the content of a table
      *
      * @param string  $db         database name
      * @param string  $table      table name
