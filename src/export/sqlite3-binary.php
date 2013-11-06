@@ -1,11 +1,14 @@
 <?php
 /**
- * SQLite 3 export code
+ * SQLite 3 (binary) export code
  *
  * @package PhpMyAdmin-Export
  * @subpackage SQLite 3
  * @version 0.2-alpha
  */
+
+if (!class_exists('SQLite3'))
+	return;
 
 require_once('sqlite3-common.inc.php');
 
@@ -14,10 +17,11 @@ require_once('sqlite3-common.inc.php');
  */
 
 if (isset($plugin_list)) {
-    $plugin_list['sqlite3'] = array(
-        'text' => __('SQLite 3'),
+    $plugin_list['sqlite3-binary'] = array(
+        'text' => __('SQLite 3 (Binary)'),
         'extension' => 'sqlite',
-        'mime_type' => 'text/x-sql',
+        'mime_type' => 'application/x-sqlite3',
+    	'force_file' => true,
         'options' => array(
             array('type' => 'begin_group', 'name' => 'general_opts'),
             array(
@@ -25,27 +29,29 @@ if (isset($plugin_list)) {
                 'name' => 'structure_or_data',
                 'values' => array(
                     'structure' => __('structure'),
-                    'data' => __('data'),
                     'structure_and_data' => __('structure and data')
                 )
             ),
         	array('type' => 'end_group')
         ),
         'options_text' => __('Options')
-	);
+    );
 } else {
-
-    /**
+	
+	/**
      * Outputs export footer
      *
      * @return  bool        Whether it succeeded
      *
      * @access  public
      */
-    function PMA_exportFooter() {
-        return true;
+	function PMA_exportFooter() {
+		global $sqlite_db, $sqlite_tmp_filename;
+    	if (!$sqlite_db->close())
+    		return false;
+    	return PMA_exportOutputHandler(file_get_contents($sqlite_tmp_filename));
     }
-
+    
     /**
      * Outputs export header
      *
@@ -53,80 +59,22 @@ if (isset($plugin_list)) {
      *
      * @access  public
      */
-    function PMA_exportHeader() {
-        global $crlf, $cfg;
+	function PMA_exportHeader() {
+        global $sqlite_db, $sqlite_tmp_filename;
 
-        $head  = PMA_exportComment(str_repeat('-', 56));
-        $head .= PMA_exportComment('phpMyAdmin SQLite 3 Dump');
-        $head .= PMA_exportComment('Version ' . PMA_VERSION);
-        $head .= PMA_exportComment('http://www.phpmyadmin.net');
-        $head .= PMA_exportComment();
-
-        $host_string = __('Host') . ': ' .  $cfg['Server']['host'];
-        if (!empty($cfg['Server']['port'])) {
-            $host_string .= ':' . $cfg['Server']['port'];
+        $sqlite_tmp_filename = tempnam(sys_get_temp_dir(), 'sql');
+        if ($sqlite_tmp_filename === false)
+        	return false;
+        
+        try {
+        	$sqlite_db = new SQLite3($sqlite_tmp_filename);
+        	return true;
         }
-        $head .= PMA_exportComment($host_string);
-
-        $head .= PMA_exportComment(__('Generation Time').': '.PMA_localisedDate());
-        $head .= PMA_exportComment(__('Server version') . ': ' . PMA_MYSQL_STR_VERSION);
-        $head .= PMA_exportComment(__('PHP Version') . ': ' . phpversion());
-        $head .= PMA_exportComment(sprintf('Exporter Version: %s', X_PMA_SQLITE3_EXPORT_VERSION));
-        $head .= PMA_exportComment(str_repeat('-', 56));
-        $head .= $crlf;
-
-        return PMA_exportOutputHandler($head);
-    }
-
-    /**
-     * Possibly outputs comment
-     *
-     * @param string  $text  Text of comment
-     * @return  string      The formatted comment
-     *
-     * @access  private
-     */
-    function PMA_exportComment($text = '')
-    {
-    	return '#' . (empty($text) ? '' : ' ') . $text . $GLOBALS['crlf'];
+        catch (Exception $e) {
+        	return false;
+        }
     }
     
-    /**
-     * Outputs database header
-     *
-     * @param string  $db Database name
-     * @return  bool        Whether it succeeded
-     *
-     * @access  public
-     */
-    function PMA_exportDBHeader($db) {
-        return true;
-    }
-
-    /**
-     * Outputs database footer
-     *
-     * @param string  $db Database name
-     * @return  bool        Whether it succeeded
-     *
-     * @access  public
-     */
-    function PMA_exportDBFooter($db) {
-        return true;
-    }
-
-    /**
-     * Outputs CREATE DATABASE statement
-     *
-     * @param string  $db Database name
-     * @return  bool        Whether it succeeded
-     *
-     * @access  public
-     */
-    function PMA_exportDBCreate($db) {
-        return true;
-    }
-
     /**
      * Outputs table's structure
      *
@@ -148,19 +96,30 @@ if (isset($plugin_list)) {
      *
      * @access  public
      */
-    function PMA_exportStructure($db, $table, $crlf, $error_url, $relation = false, $comments = false, $mime = false, $dates = false, $export_mode, $export_type)
+	function PMA_exportStructure($db, $table, $crlf, $error_url, $relation = false, $comments = false, $mime = false, $dates = false, $export_mode, $export_type)
     {
-        if ($export_mode == 'create_table')
+    	if ($export_mode == 'create_table')
         {
-            $schema = PMA_getTableDef($db, $table, $crlf, $error_url, true, true);
-            return ($schema === false) ? false : PMA_exportOutputHandler($schema);
+        	global $sqlite_db;
+        	$schema = PMA_getTableDef($db, $table, $crlf, $error_url, true, true);
+        	if ($schema === false)
+        		return false;
+        	$queries = explode(';', $schema);
+        	foreach ($queries as $query)
+        	{
+        		if (empty($query))
+        			continue;
+        		if (!$sqlite_db->exec($query))
+        			return false;
+        	}
+        	return true;
         }
         else
             return true;
     }
-
+    
     /**
-     * Outputs the content of a table
+     * Outputs the content of a table in CSV format
      *
      * @param string  $db         database name
      * @param string  $table      table name
@@ -171,15 +130,10 @@ if (isset($plugin_list)) {
      *
      * @access  public
      */
-    function PMA_exportData($db, $table, $crlf, $error_url, $sql_query) {
-        $comment = $crlf;
-        $comment .= PMA_exportComment(str_repeat('-', 56));
-        $comment .= PMA_exportComment(sprintf("%s %s.%s", __('Dumping data for table'), PMA_backquote($db), PMA_backquote($table)));
-        $comment .= PMA_exportComment(str_repeat('-', 56));
-        if (!PMA_exportOutputHandler($comment))
-            return false;
-
-        // Gets the data from the database
+	function PMA_exportData($db, $table, $crlf, $error_url, $sql_query) {
+		global $sqlite_db;
+    	
+    	// Gets the data from the database
         $result      = PMA_DBI_query($sql_query, null, PMA_DBI_QUERY_UNBUFFERED);
         $fields_cnt  = PMA_DBI_num_fields($result);
 
@@ -200,12 +154,61 @@ if (isset($plugin_list)) {
             }
 
             $schema_insert = sprintf("INSERT INTO %s (%s) VALUES (%s);", $table, $fields, implode(',', $values));
-            if (!PMA_exportOutputHandler($schema_insert . $crlf))
-                return false;
+            if (!$sqlite_db->query($schema_insert))
+            	return false;
         } // end while
         PMA_DBI_free_result($result);
 
         return true;
+    }
+    
+    /**
+     * Possibly outputs comment
+     *
+     * @param string  $text  Text of comment
+     * @return  string      The formatted comment
+     *
+     * @access  private
+     */
+    function PMA_exportComment($text = '')
+    {
+    	return '';
+    }
+    
+    /**
+     * Outputs database header
+     *
+     * @param string  $db Database name
+     * @return  bool        Whether it succeeded
+     *
+     * @access  public
+     */
+    function PMA_exportDBHeader($db) {
+    	return true;
+    }
+    
+    /**
+     * Outputs database footer
+     *
+     * @param string  $db Database name
+     * @return  bool        Whether it succeeded
+     *
+     * @access  public
+     */
+    function PMA_exportDBFooter($db) {
+    	return true;
+    }
+    
+    /**
+     * Outputs CREATE DATABASE statement
+     *
+     * @param string  $db Database name
+     * @return  bool        Whether it succeeded
+     *
+     * @access  public
+     */
+    function PMA_exportDBCreate($db) {
+    	return true;
     }
 }
 ?>
