@@ -1,7 +1,7 @@
 phpMyAdmin-SQLite
 =================
 
-phpMyAdmin-SQLite is an export plugin for phpMyAdmin designed to generate database dumps compatible with SQLite 3.
+phpMyAdmin-SQLite is an export plugin for phpMyAdmin designed to generate database dumps or binary files compatible with SQLite 3.
 The project is currently in an early alpha state but should be ready for testing purposes.
 
 Compatibility
@@ -13,7 +13,7 @@ However, the plugin should work for phpMyAdmin 3.4 and later versions.
 Installation
 ------------
 
-Copy the content of src/export folder to your phpMyAdmin libraries/export folder.
+Copy the content of src/export folder to your phpMyAdmin's libraries/export folder.
 That's all!
 
 Configuration
@@ -21,7 +21,8 @@ Configuration
 
 You should add to your phpMyAdmin config.inc.php the following line in order to configure the default behavior for structure and/or data export :
 
-`$cfg['Export']['sqlite3_structure_or_data'] = 'structure_and_data';`
+	$cfg['Export']['sqlite3_structure_or_data'] = 'structure_and_data';
+	$cfg['Export']['sqlite3-binary_structure_or_data'] = 'structure_and_data';
 
 Supported values are `structure` for exporting structure only, `data` for exporting data only and  `structure_and_data` for exporting both.
 
