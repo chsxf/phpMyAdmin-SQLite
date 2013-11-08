@@ -8,7 +8,9 @@ Compatibility
 -------------
 
 At this time, phpMyAdmin-SQLite has only been tested against phpMyAdmin 3.5.2.2.
-However, the plugin should work for phpMyAdmin 3.4 and later versions.
+However, the plugin should work for phpMyAdmin 3.4 and later versions of the 3.x branch.
+
+**This plugin is not compatible yet with phpMyAdmin 4.0 and later versions.**
 
 Installation
 ------------
