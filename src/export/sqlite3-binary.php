@@ -101,7 +101,7 @@ if (isset($plugin_list)) {
     	if ($export_mode == 'create_table')
         {
         	global $sqlite_db;
-        	$schema = PMA_getTableDef($db, $table, $crlf, $error_url, true, true);
+        	$schema = PMA_getTableDef($db, $table, $crlf, $error_url);
         	if ($schema === false)
         		return false;
         	$queries = explode(';', $schema);

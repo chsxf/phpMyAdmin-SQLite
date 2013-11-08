@@ -75,14 +75,11 @@ if (!function_exists('PMA_getTableDef'))
 	 * @param string  $table          the table name
 	 * @param string  $crlf           the end of line sequence
 	 * @param string  $error_url      the url to go back in case of error
-	 * @param bool    $show_dates     whether to include creation/update/check dates
-	 * @param bool    $add_semicolon  whether to add semicolon and end-of-line at the end
-	 * @param bool    $view           whether we're handling a view
 	 * @return  string   resulting schema
 	 *
 	 * @access  public
 	 */
-	function PMA_getTableDef($db, $table, $crlf, $error_url, $show_dates = false, $add_semicolon = true, $view = false)
+	function PMA_getTableDef($db, $table, $crlf, $error_url)
 	{
 		$schema_create = $crlf;
 	
@@ -95,13 +92,13 @@ if (!function_exists('PMA_getTableDef'))
 		if ($result !== false || PMA_DBI_num_rows($result) <= 0) {
 			$tmpres = PMA_DBI_fetch_assoc($result);
 	
-			if ($show_dates && !empty($tmpres['Create_time']))
+			if (!empty($tmpres['Create_time']))
 				$schema_create .= PMA_exportComment(__('Creation') . ': ' . PMA_localisedDate(strtotime($tmpres['Create_time'])));
 	
-			if ($show_dates && !empty($tmpres['Update_time']))
+			if (!empty($tmpres['Update_time']))
 				$schema_create .= PMA_exportComment(__('Last update') . ': ' . PMA_localisedDate(strtotime($tmpres['Update_time'])));
 	
-			if ($show_dates && !empty($tmpres['Check_time']))
+			if (!empty($tmpres['Check_time']))
 				$schema_create .= PMA_exportComment(__('Last check') . ': ' . PMA_localisedDate(strtotime($tmpres['Check_time'])));
 		}
 		else
@@ -129,7 +126,7 @@ if (!function_exists('PMA_getTableDef'))
 				$fields[] = sprintf("\t%s %s%s%s", $tmpres['Field'], $type, $null, $default_value);
 			}
 			if (!empty($pkFields))
-				$fields[] = sprintf("PRIMARY KEY (%s)", implode(', ', $pkFields));
+				$fields[] = sprintf("\tPRIMARY KEY (%s)", implode(', ', $pkFields));
 			$schema_create .= implode(",{$crlf}", $fields) . "{$crlf});{$crlf}";
 		}
 		else

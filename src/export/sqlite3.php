@@ -152,7 +152,7 @@ if (isset($plugin_list)) {
     {
         if ($export_mode == 'create_table')
         {
-            $schema = PMA_getTableDef($db, $table, $crlf, $error_url, true, true);
+            $schema = PMA_getTableDef($db, $table, $crlf, $error_url);
             return ($schema === false) ? false : PMA_exportOutputHandler($schema);
         }
         else
